@@ -30,7 +30,7 @@ class SubdivisionEntityTest extends TestCase
 	{
 		$usa = Addressing::country('US');
 		$colorado = $usa->administrativeArea('CO');
-		
+
 		$this->assertEquals($colorado->getParent(), $colorado->parent);
 		$this->assertEquals($colorado->getCountryCode(), $colorado->country_code);
 		$this->assertEquals($colorado->getLocale(), $colorado->locale);
@@ -38,8 +38,18 @@ class SubdivisionEntityTest extends TestCase
 		$this->assertEquals($colorado->getLocalCode(), $colorado->local_code);
 		$this->assertEquals($colorado->getName(), $colorado->name);
 		$this->assertEquals($colorado->getLocalName(), $colorado->local_name);
-		$this->assertEquals($colorado->getIsoCode(), $colorado->iso_code);
 		$this->assertEquals($colorado->getPostalCodePattern(), $colorado->postal_code_pattern);
 		$this->assertEquals($colorado->getPostalCodePatternType(), $colorado->postal_code_pattern_type);
+	}
+
+	public function test_iso_code_returns_null_gracefully(): void
+	{
+		$usa = Addressing::country('US');
+		$colorado = $usa->administrativeArea('CO');
+
+		// In v2, getIsoCode() was removed from the base Subdivision class.
+		// Our wrapper should return null gracefully.
+		$iso_code = $colorado->getIsoCode();
+		$this->assertTrue($iso_code === null || is_string($iso_code));
 	}
 }

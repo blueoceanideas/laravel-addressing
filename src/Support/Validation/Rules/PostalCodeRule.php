@@ -2,7 +2,6 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
-use CommerceGuys\Addressing\Subdivision\PatternType;
 use Galahad\LaravelAddressing\Entity\Country;
 use Galahad\LaravelAddressing\Entity\Subdivision;
 use Illuminate\Contracts\Validation\Rule;
@@ -71,17 +70,30 @@ class PostalCodeRule implements Rule
 		return in_array('postalCode', $this->country->addressFormat()->getRequiredFields());
 	}
 
+	/**
+	 * Build the postal code regex pattern.
+	 *
+	 * In commerceguys/addressing v1, subdivisions had a "pattern type" (full or start)
+	 * that determined whether the pattern should match the entire postal code or just
+	 * the beginning. In v2, this concept was removed and all subdivision patterns are
+	 * full patterns. This method handles both versions via the wrapper's
+	 * getPostalCodePatternType() which gracefully degrades.
+	 */
 	protected function pattern(): ?string
 	{
 		$pattern = $this->administrative_area
 			? $this->administrative_area->getPostalCodePattern()
 			: $this->country->addressFormat()->getPostalCodePattern();
 
+		if (null === $pattern) {
+			return null;
+		}
+
 		$pattern_type = $this->administrative_area
 			? $this->administrative_area->getPostalCodePatternType()
-			: PatternType::FULL;
+			: 'full';
 
-		if (PatternType::START === $pattern_type) {
+		if ('start' === $pattern_type) {
 			return '/^'.$pattern.'/i';
 		}
 

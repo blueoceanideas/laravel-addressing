@@ -2,7 +2,6 @@
 
 namespace Galahad\LaravelAddressing\Entity;
 
-use CommerceGuys\Addressing\Subdivision\PatternType;
 use CommerceGuys\Addressing\Subdivision\Subdivision as BaseSubdivision;
 use Galahad\LaravelAddressing\Collection\SubdivisionCollection;
 
@@ -24,13 +23,13 @@ use Galahad\LaravelAddressing\Collection\SubdivisionCollection;
 class Subdivision
 {
 	use DecoratesEntity;
-	
+
 	protected BaseSubdivision $subdivision;
-	
+
 	protected Country $country;
-	
+
 	protected ?Subdivision $parent = null;
-	
+
 	protected ?SubdivisionCollection $children = null;
 
 	public function __construct(Country $country, BaseSubdivision $subdivision, self $parent = null)
@@ -62,9 +61,42 @@ class Subdivision
 			?? $this->country->addressFormat()->getPostalCodePattern();
 	}
 
+	/**
+	 * Get the postal code pattern type.
+	 *
+	 * In commerceguys/addressing v1, subdivisions had a pattern type ('full' or 'start').
+	 * In v2, this concept was removed and all subdivision patterns are full patterns.
+	 * This method maintains backward compatibility by checking if the method exists on the
+	 * underlying subdivision (v1) and falling back to 'full' (v2).
+	 */
 	public function getPostalCodePatternType(): string
 	{
-		return $this->subdivision->getPostalCodePatternType() ?? PatternType::FULL;
+		// In v2, getPostalCodePatternType() was removed from Subdivision.
+		// In v1, it exists and may return 'start' or 'full'.
+		if (method_exists($this->subdivision, 'getPostalCodePatternType')) {
+			$patternType = $this->subdivision->getPostalCodePatternType();
+
+			if (null !== $patternType) {
+				return $patternType;
+			}
+		}
+
+		return 'full';
+	}
+
+	/**
+	 * Get the ISO code for this subdivision.
+	 *
+	 * In commerceguys/addressing v2, getIsoCode() was removed from Subdivision.
+	 * This method maintains backward compatibility.
+	 */
+	public function getIsoCode(): ?string
+	{
+		if (method_exists($this->subdivision, 'getIsoCode')) {
+			return $this->subdivision->getIsoCode();
+		}
+
+		return null;
 	}
 
 	public function getLocale(): string
@@ -109,7 +141,7 @@ class Subdivision
 	{
 		return $this->subdivision->$name(...$arguments);
 	}
-	
+
 	protected function decoratedEntity()
 	{
 		return $this->subdivision;
