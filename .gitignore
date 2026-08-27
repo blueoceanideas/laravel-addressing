@@ -9,3 +9,6 @@ composer.lock
 npm-debug.log
 .phpunit.result.cache
 .php-cs-fixer.cache
+/.phpunit.cache/
+/coverage/
+/phpunit.xml.bak
