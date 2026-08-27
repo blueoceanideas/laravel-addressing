@@ -25,7 +25,7 @@ class SubdivisionEntityTest extends TestCase
 		$this->assertTrue($colorado->is($colorado2));
 		$this->assertFalse($colorado->is($pennsylvania));
 	}
-	
+
 	public function test_attributes_can_get_accessed_as_properties(): void
 	{
 		$usa = Addressing::country('US');
@@ -40,16 +40,5 @@ class SubdivisionEntityTest extends TestCase
 		$this->assertEquals($colorado->getLocalName(), $colorado->local_name);
 		$this->assertEquals($colorado->getPostalCodePattern(), $colorado->postal_code_pattern);
 		$this->assertEquals($colorado->getPostalCodePatternType(), $colorado->postal_code_pattern_type);
-	}
-
-	public function test_iso_code_returns_null_gracefully(): void
-	{
-		$usa = Addressing::country('US');
-		$colorado = $usa->administrativeArea('CO');
-
-		// In v2, getIsoCode() was removed from the base Subdivision class.
-		// Our wrapper should return null gracefully.
-		$iso_code = $colorado->getIsoCode();
-		$this->assertTrue($iso_code === null || is_string($iso_code));
 	}
 }

@@ -4,7 +4,6 @@ namespace Galahad\LaravelAddressing\Tests;
 
 use Galahad\LaravelAddressing\Entity\AdministrativeArea;
 use Galahad\LaravelAddressing\Entity\Country;
-use Galahad\LaravelAddressing\Entity\Subdivision;
 use Galahad\LaravelAddressing\Exceptions\AdministrativeAreaNotFoundException;
 use Galahad\LaravelAddressing\Support\Facades\Addressing;
 
@@ -72,7 +71,6 @@ class CountryEntityTest extends TestCase
 	public function test_it_should_be_able_to_list_its_administrative_areas(): void
 	{
 		foreach ($this->country->administrativeAreas() as $administrative_area) {
-			/* @var Subdivision $administrative_area */
 			$this->assertInstanceOf(AdministrativeArea::class, $administrative_area);
 			$this->assertContains($administrative_area->getCode(), $this->test_state_codes);
 		}
@@ -89,11 +87,11 @@ class CountryEntityTest extends TestCase
 	{
 		$this->assertNull($this->country->administrativeArea('XX'));
 	}
-	
+
 	public function test_it_triggers_an_exception_when_using_or_fail_method(): void
 	{
 		$this->expectException(AdministrativeAreaNotFoundException::class);
-		
+
 		$this->country->administrativeAreaOrFail('XX');
 	}
 
@@ -114,11 +112,11 @@ class CountryEntityTest extends TestCase
 
 		$this->assertEquals('Pennsylvania', $list['PA']);
 	}
-	
+
 	public function test_attributes_can_get_accessed_as_properties(): void
 	{
 		$usa = Addressing::country('US');
-		
+
 		$this->assertEquals($usa->getCountryCode(), $usa->country_code);
 		$this->assertEquals($usa->getName(), $usa->name);
 		$this->assertEquals($usa->getThreeLetterCode(), $usa->three_letter_code);
@@ -126,5 +124,50 @@ class CountryEntityTest extends TestCase
 		$this->assertEquals($usa->getCurrencyCode(), $usa->currency_code);
 		$this->assertEquals($usa->getTimezones(), $usa->timezones);
 		$this->assertEquals($usa->getLocale(), $usa->locale);
+	}
+
+	public function test_it_can_retrieve_canada_country(): void
+	{
+		$canada = Addressing::country('CA');
+
+		$this->assertEquals('CA', $canada->getCountryCode());
+		$this->assertEquals('Canada', $canada->getName());
+		$this->assertEquals('CAN', $canada->getThreeLetterCode());
+		$this->assertEquals('124', $canada->getNumericCode());
+		$this->assertEquals('CAD', $canada->getCurrencyCode());
+		$this->assertEquals('en', $canada->getLocale());
+
+		$alberta = $canada->administrativeArea('AB');
+		$this->assertEquals('CA', $alberta->getCountryCode());
+		$this->assertEquals('AB', $alberta->getCode());
+		$this->assertEquals('AB', $alberta->getLocalCode());
+		$this->assertEquals('Alberta', $alberta->getLocalName());
+		$this->assertEquals('fr', $alberta->getLocale());
+	}
+
+	public function test_it_can_retrieve_united_kingdom_country(): void
+	{
+		$uk = Addressing::country('GB');
+
+		$this->assertEquals('GB', $uk->getCountryCode());
+		$this->assertEquals('United Kingdom', $uk->getName());
+		$this->assertEquals('GBR', $uk->getThreeLetterCode());
+		$this->assertEquals('826', $uk->getNumericCode());
+		$this->assertEquals('GBP', $uk->getCurrencyCode());
+		$this->assertEquals('en', $uk->getLocale());
+
+		$aberdeen = $uk->administrativeArea('ABE');
+		$this->assertEquals('GB', $aberdeen->getCountryCode());
+		$this->assertEquals('Aberdeen City', $aberdeen->getCode());
+		$this->assertEquals('Aberdeen City', $aberdeen->getLocalCode());
+		$this->assertEquals('Aberdeen City', $aberdeen->getLocalName());
+		$this->assertEquals('cy', $aberdeen->getLocale());
+
+		$greenwich = $uk->administrativeArea('GRE');
+		$this->assertEquals('GB', $greenwich->getCountryCode());
+		$this->assertEquals('Greenwich', $greenwich->getCode());
+		$this->assertEquals('Greenwich', $greenwich->getLocalCode());
+		$this->assertEquals('Greenwich', $greenwich->getLocalName());
+		$this->assertEquals('cy', $greenwich->getLocale());
 	}
 }

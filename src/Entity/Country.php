@@ -23,17 +23,17 @@ use Galahad\LaravelAddressing\Exceptions\AdministrativeAreaNotFoundException;
 class Country
 {
 	use DecoratesEntity;
-	
+
 	protected BaseCountry $country;
-	
+
 	protected SubdivisionRepositoryInterface $subdivision_repository;
-	
+
 	protected AddressFormatRepositoryInterface $address_format_repository;
-	
+
 	protected ?AdministrativeAreaCollection $administrative_areas = null;
-	
+
 	protected ?AddressFormat $address_format = null;
-	
+
 	public function __construct(
 		BaseCountry $country,
 		SubdivisionRepositoryInterface $subdivision_repository,
@@ -43,7 +43,7 @@ class Country
 		$this->subdivision_repository = $subdivision_repository;
 		$this->address_format_repository = $address_format_repository;
 	}
-	
+
 	public function addressFormat(): AddressFormat
 	{
 		if (null === $this->address_format) {
@@ -76,25 +76,25 @@ class Country
 
 		return $this->administrative_areas;
 	}
-	
+
 	public function administrativeArea(string $code): ?AdministrativeArea
 	{
 		// First try on the assumption that it's a 2-letter upper case code.
 		// If that doesn't work, do a case-insensitive lookup.
-		
+
 		return $this->administrativeAreas()->get(strtoupper($code))
 			?? $this->administrativeAreas()->first(fn(AdministrativeArea $subdivision) => 0 === strcasecmp($subdivision->getCode(), $code));
 	}
-	
+
 	public function administrativeAreaOrFail(string $code): AdministrativeArea
 	{
 		if ($administrative_area = $this->administrativeArea($code)) {
 			return $administrative_area;
 		}
-		
+
 		throw new AdministrativeAreaNotFoundException($this->getCountryCode(), $code);
 	}
-	
+
 	public function administrativeAreaByName(string $name): ?AdministrativeArea
 	{
 		return $this->administrativeAreas()
@@ -112,7 +112,7 @@ class Country
 		return $this->administrativeArea($input) ?? $this->administrativeAreaByName($input);
 	}
 
-	public function is(self $country = null): bool
+	public function is(?self $country = null): bool
 	{
 		if (null === $country) {
 			return false;
@@ -120,7 +120,7 @@ class Country
 
 		return $this->getCountryCode() === $country->getCountryCode();
 	}
-	
+
 	protected function decoratedEntity()
 	{
 		return $this->country;

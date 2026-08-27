@@ -29,11 +29,11 @@ class AdministrativeAreaCollection extends SubdivisionCollection
 	 * @param \Galahad\LaravelAddressing\Entity\AdministrativeArea $default
 	 * @return \Galahad\LaravelAddressing\Entity\AdministrativeArea|null
 	 */
-	public function last(callable $callback = null, $default = null): ?Subdivision
+	public function last(?callable $callback = null, $default = null): ?Subdivision
 	{
 		return parent::last($callback, $default);
 	}
-	
+
 	/**
 	 * @param int $count
 	 * @return \Galahad\LaravelAddressing\Entity\AdministrativeArea|\Galahad\LaravelAddressing\Entity\AdministrativeArea[]|\Galahad\LaravelAddressing\Collection\AdministrativeAreaCollection|null

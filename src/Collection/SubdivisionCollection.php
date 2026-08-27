@@ -60,11 +60,11 @@ class SubdivisionCollection extends Collection
 		return new Collection(array_keys($this->items));
 	}
 
-	public function last(callable $callback = null, $default = null): ?Subdivision
+	public function last(?callable $callback = null, $default = null): ?Subdivision
 	{
 		return parent::last($callback, $default);
 	}
-	
+
 	/**
 	 * @param int $count
 	 * @return \Galahad\LaravelAddressing\Entity\Subdivision|\Galahad\LaravelAddressing\Entity\Subdivision[]|\Galahad\LaravelAddressing\Collection\SubdivisionCollection|null

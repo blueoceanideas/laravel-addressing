@@ -32,7 +32,7 @@ class Subdivision
 
 	protected ?SubdivisionCollection $children = null;
 
-	public function __construct(Country $country, BaseSubdivision $subdivision, self $parent = null)
+	public function __construct(Country $country, BaseSubdivision $subdivision, ?self $parent = null)
 	{
 		$this->subdivision = $subdivision;
 
@@ -71,32 +71,7 @@ class Subdivision
 	 */
 	public function getPostalCodePatternType(): string
 	{
-		// In v2, getPostalCodePatternType() was removed from Subdivision.
-		// In v1, it exists and may return 'start' or 'full'.
-		if (method_exists($this->subdivision, 'getPostalCodePatternType')) {
-			$patternType = $this->subdivision->getPostalCodePatternType();
-
-			if (null !== $patternType) {
-				return $patternType;
-			}
-		}
-
 		return 'full';
-	}
-
-	/**
-	 * Get the ISO code for this subdivision.
-	 *
-	 * In commerceguys/addressing v2, getIsoCode() was removed from Subdivision.
-	 * This method maintains backward compatibility.
-	 */
-	public function getIsoCode(): ?string
-	{
-		if (method_exists($this->subdivision, 'getIsoCode')) {
-			return $this->subdivision->getIsoCode();
-		}
-
-		return null;
 	}
 
 	public function getLocale(): string
@@ -116,7 +91,7 @@ class Subdivision
 		return $this->children;
 	}
 
-	public function is(self $subdivision = null): bool
+	public function is(?self $subdivision = null): bool
 	{
 		if (null === $subdivision) {
 			return false;

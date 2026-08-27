@@ -14,21 +14,21 @@ use Illuminate\Support\Traits\Macroable;
 class LaravelAddressing
 {
 	use Macroable;
-	
+
 	protected string $locale;
-	
+
 	protected string $fallback_locale;
-	
+
 	protected CountryRepositoryInterface $country_repository;
-	
+
 	protected SubdivisionRepositoryInterface $subdivision_repository;
-	
+
 	protected AddressFormatRepositoryInterface $address_format_repository;
-	
+
 	protected CountryCollection $countries;
-	
+
 	protected bool $all_countries_loaded = false;
-	
+
 	public function __construct(
 		CountryRepositoryInterface $country_repository,
 		SubdivisionRepositoryInterface $subdivision_repository,
@@ -72,13 +72,13 @@ class LaravelAddressing
 
 		return $this->countries->get($country_code, null);
 	}
-	
+
 	public function countryOrFail(string $country_code, ?string $locale = null): Country
 	{
 		if ($country = $this->country($country_code, $locale)) {
 			return $country;
 		}
-		
+
 		throw new CountryNotFoundException($country_code);
 	}
 
@@ -94,7 +94,7 @@ class LaravelAddressing
 	{
 		if (! $this->all_countries_loaded) {
 			$all_countries = $this->country_repository->getAll($locale ?? $this->locale);
-			
+
 			foreach ($all_countries as $country_code => $base_country) {
 				$this->countries->put($country_code, new Country(
 					$base_country,

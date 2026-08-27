@@ -25,11 +25,11 @@ class CountryCollection extends Collection
 		return new Collection(array_keys($this->items));
 	}
 
-	public function last(callable $callback = null, $default = null): ?Country
+	public function last(?callable $callback = null, $default = null): ?Country
 	{
 		return parent::last($callback, $default);
 	}
-	
+
 	/**
 	 * @param int $count
 	 * @return \Galahad\LaravelAddressing\Entity\Country|\Galahad\LaravelAddressing\Entity\Country[]|\Galahad\LaravelAddressing\Collection\CountryCollection|null
