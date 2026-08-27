@@ -2,11 +2,11 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
+use Closure;
 use Galahad\LaravelAddressing\Entity\Country;
-use Illuminate\Contracts\Validation\Rule;
-use Throwable;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class AdministrativeAreaCodeRule implements Rule
+class AdministrativeAreaCodeRule implements ValidationRule
 {
 	/**
 	 * @var \Galahad\LaravelAddressing\Entity\Country
@@ -23,28 +23,19 @@ class AdministrativeAreaCodeRule implements Rule
 		$this->country = $country;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function passes($attribute, $value): bool
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		try {
-			$value = (string) $value;
-		} catch (Throwable $exception) {
-			return false;
-		}
+        $value = (string) $value;
 
-		// If it's not required and empty, pass
-		if ('' === $value && false === $this->isRequired()) {
-			return true;
-		}
+        // If required and empty, fail.
+        if ($this->isRequired() && empty($value)) {
+            $fail('The :attribute is required.');
+        }
 
-		// If we don't have a known list of admin areas, just pass
-		if (0 === $this->country->administrativeAreas()->count()) {
-			return true;
-		}
-
-		return null !== $this->country->administrativeArea($value);
+        // If we have known lst of admin areas and given value is null, fail.
+        if ($this->country->administrativeAreas()->count() > 0 && null === $this->country->administrativeArea($value)) {
+            $fail('Invalid administrative area code.');
+        }
 	}
 
 	/**
