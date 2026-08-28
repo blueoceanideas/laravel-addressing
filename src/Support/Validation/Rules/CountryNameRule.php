@@ -2,12 +2,15 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
+use Closure;
 use Galahad\LaravelAddressing\LaravelAddressing;
-use Illuminate\Contracts\Validation\Rule;
-use Throwable;
+use Galahad\LaravelAddressing\Support\Validation\Rules\Concerns\CastsValueToString;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class CountryNameRule implements Rule
+class CountryNameRule implements ValidationRule
 {
+	use CastsValueToString;
+
 	/**
 	 * @var \Galahad\LaravelAddressing\LaravelAddressing
 	 */
@@ -26,22 +29,12 @@ class CountryNameRule implements Rule
 	/**
 	 * {@inheritdoc}
 	 */
-	public function passes($attribute, $value): bool
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		try {
-			$value = (string) $value;
-		} catch (Throwable $exception) {
-			return false;
+		$value = $this->castToString($value);
+
+		if (null === $value || null === $this->addressing->countryByName($value)) {
+			$fail('laravel-addressing::validation.country_name')->translate();
 		}
-
-		return null !== $this->addressing->countryByName($value);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function message(): string
-	{
-		return trans('laravel-addressing::validation.country_name');
 	}
 }

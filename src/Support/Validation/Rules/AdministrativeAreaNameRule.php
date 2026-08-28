@@ -2,12 +2,15 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
+use Closure;
 use Galahad\LaravelAddressing\Entity\Country;
-use Illuminate\Contracts\Validation\Rule;
-use Throwable;
+use Galahad\LaravelAddressing\Support\Validation\Rules\Concerns\CastsValueToString;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class AdministrativeAreaNameRule implements Rule
+class AdministrativeAreaNameRule implements ValidationRule
 {
+	use CastsValueToString;
+
 	/**
 	 * @var \Galahad\LaravelAddressing\Entity\Country
 	 */
@@ -26,35 +29,43 @@ class AdministrativeAreaNameRule implements Rule
 	/**
 	 * {@inheritdoc}
 	 */
-	public function passes($attribute, $value): bool
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		try {
-			$value = (string) $value;
-		} catch (Throwable $exception) {
-			return false;
+		if (null === ($value = $this->castToString($value))) {
+			$this->fail($fail);
+
+			return;
 		}
 
-		// If it's not required and empty, pass
-		if ('' === $value && false === $this->isRequired()) {
-			return true;
+		// If it's empty, only the address format decides whether that's a failure.
+		if ('' === $value) {
+			if ($this->isRequired()) {
+				$fail('validation.required')->translate();
+			}
+
+			return;
 		}
 
-		// If we don't have a known list of admin areas, just pass
+		// If we don't have a known list of administrative areas, pass.
 		if (0 === $this->country->administrativeAreas()->count()) {
-			return true;
+			return;
 		}
 
-		return null !== $this->country->administrativeAreaByName($value);
+		if (null === $this->country->administrativeAreaByName($value)) {
+			$this->fail($fail);
+		}
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * Report a failure using our own translated message.
+	 *
+	 * @param \Closure $fail
 	 */
-	public function message(): string
+	protected function fail(Closure $fail): void
 	{
-		$type = $this->country->addressFormat()->getAdministrativeAreaType();
-
-		return trans('laravel-addressing::validation.administrative_area_name', compact('type'));
+		$fail('laravel-addressing::validation.administrative_area_name')->translate([
+			'type' => $this->country->addressFormat()->getAdministrativeAreaType() ?? 'administrative area',
+		]);
 	}
 
 	protected function isRequired(): bool

@@ -12,13 +12,15 @@ use Galahad\LaravelAddressing\Support\Validation\Rules\CountryNameRule;
 use Galahad\LaravelAddressing\Support\Validation\Rules\LooseAdministrativeAreaRule;
 use Galahad\LaravelAddressing\Support\Validation\Rules\LooseCountryRule;
 use Galahad\LaravelAddressing\Support\Validation\Rules\PostalCodeRule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\InvokableValidationRule;
 use Illuminate\Validation\Validator as BaseValidator;
 
 class Validator
 {
 	protected LaravelAddressing $addressing;
-	
+
 	public function __construct(LaravelAddressing $addressing)
 	{
 		$this->addressing = $addressing;
@@ -27,103 +29,109 @@ class Validator
 	/**
 	 * Validate that the input is a country code.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
+	 * @param array $parameters
+	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function countryCode($attribute, $value): bool
+	public function countryCode(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
-		return (new CountryCodeRule($this->addressing))->passes($attribute, $value);
+		return $this->check('country_code', new CountryCodeRule($this->addressing), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate that the input is a country name.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
+	 * @param array $parameters
+	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function countryName($attribute, $value): bool
+	public function countryName(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
-		return (new CountryNameRule($this->addressing))->passes($attribute, $value);
+		return $this->check('country_name', new CountryNameRule($this->addressing), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate that the input is a country name or code.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
+	 * @param array $parameters
+	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function looseCountry($attribute, $value): bool
+	public function looseCountry(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
-		return (new LooseCountryRule($this->addressing))->passes($attribute, $value);
+		return $this->check('country', new LooseCountryRule($this->addressing), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate that the input is an administrative code.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @param array $parameters
 	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function administrativeArea($attribute, $value, array $parameters, BaseValidator $validator): bool
+	public function administrativeArea(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
 		if (! $country = $this->loadCountryFromValidationData($parameters, $validator)) {
 			return false;
 		}
 
-		return (new AdministrativeAreaCodeRule($country))->passes($attribute, $value);
+		return $this->check('administrative_area_code', new AdministrativeAreaCodeRule($country), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate that the input is an administrative area name.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @param array $parameters
 	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function administrativeAreaName($attribute, $value, array $parameters, BaseValidator $validator): bool
+	public function administrativeAreaName(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
 		if (! $country = $this->loadCountryFromValidationData($parameters, $validator)) {
 			return false;
 		}
 
-		return (new AdministrativeAreaNameRule($country))->passes($attribute, $value);
+		return $this->check('administrative_area_name', new AdministrativeAreaNameRule($country), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate that the input is an administrative area name or code.
 	 *
-	 * @param $attribute
-	 * @param $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @param array $parameters
 	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function looseAdministrativeArea($attribute, $value, array $parameters, BaseValidator $validator): bool
+	public function looseAdministrativeArea(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
 		if (! $country = $this->loadCountryFromValidationData($parameters, $validator)) {
 			return false;
 		}
 
-		return (new LooseAdministrativeAreaRule($country))->passes($attribute, $value);
+		return $this->check('administrative_area', new LooseAdministrativeAreaRule($country), $attribute, $value, $validator);
 	}
 
 	/**
 	 * Validate a postal code.
 	 *
-	 * @param $attribute
-	 * @param string $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @param array $parameters
 	 * @param \Illuminate\Validation\Validator $validator
 	 * @return bool
 	 */
-	public function postalCode($attribute, $value, array $parameters, BaseValidator $validator): bool
+	public function postalCode(string $attribute, mixed $value, array $parameters, BaseValidator $validator): bool
 	{
 		if (! $country = $this->loadCountryFromValidationData($parameters, $validator)) {
 			return false;
@@ -131,7 +139,42 @@ class Validator
 
 		$administrative_area = $this->loadAdministrativeAreaFromValidationData($country, $parameters, $validator);
 
-		return (new PostalCodeRule($country, $administrative_area))->passes($attribute, $value);
+		return $this->check('postal_code', new PostalCodeRule($country, $administrative_area), $attribute, $value, $validator);
+	}
+
+	/**
+	 * Bridge between Laravel's string-based rule names (registered with
+	 * Validator::extend(), which expects a boolean) and our rule classes,
+	 * which implement the ValidationRule contract and report failures
+	 * through a $fail() closure instead of a return value.
+	 *
+	 * @param string $rule_name
+	 * @param \Illuminate\Contracts\Validation\ValidationRule $rule
+	 * @param string $attribute
+	 * @param mixed $value
+	 * @param \Illuminate\Validation\Validator $validator
+	 * @return bool
+	 */
+	protected function check(string $rule_name, ValidationRule $rule, string $attribute, mixed $value, BaseValidator $validator): bool
+	{
+		// InvokableValidationRule is the same adapter Laravel uses when a rule
+		// object is passed in the rules array. It provides the $fail() closure,
+		// collects the resulting messages and gives us back a boolean.
+		$invokable = InvokableValidationRule::make($rule)->setValidator($validator);
+
+		if ($invokable->passes($attribute, $value)) {
+			return true;
+		}
+
+		// extend() callbacks can only return a boolean, so register the rule's
+		// own message under the "attribute.rule" key the failure will look up.
+		// Fallback messages are the last thing Laravel checks, so anything the
+		// developer configured for this attribute still takes precedence.
+		foreach ((array) $invokable->message() as $message) {
+			$validator->fallbackMessages["{$attribute}.{$rule_name}"] = $message;
+		}
+
+		return false;
 	}
 
 	/**

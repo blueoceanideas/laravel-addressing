@@ -2,20 +2,20 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
+use Closure;
 use Galahad\LaravelAddressing\LaravelAddressing;
-use Illuminate\Contracts\Validation\Rule;
+use Galahad\LaravelAddressing\Support\Validation\Rules\Concerns\RunsNestedRules;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\ValidatorAwareRule;
 
-class LooseCountryRule implements Rule
+class LooseCountryRule implements ValidationRule, ValidatorAwareRule
 {
+	use RunsNestedRules;
+
 	/**
 	 * @var \Galahad\LaravelAddressing\LaravelAddressing
 	 */
 	protected $addressing;
-
-	/**
-	 * @var Rule
-	 */
-	protected $matched_rule;
 
 	/**
 	 * Constructor.
@@ -30,17 +30,15 @@ class LooseCountryRule implements Rule
 	/**
 	 * {@inheritdoc}
 	 */
-	public function passes($attribute, $value): bool
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		return (new CountryCodeRule($this->addressing))->passes($attribute, $value)
-			?: (new CountryNameRule($this->addressing))->passes($attribute, $value);
-	}
+		$passes = $this->nestedRulePasses(new CountryCodeRule($this->addressing), $attribute, $value)
+			|| $this->nestedRulePasses(new CountryNameRule($this->addressing), $attribute, $value);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function message(): string
-	{
-		return trans('laravel-addressing::validation.country');
+		if ($passes) {
+			return;
+		}
+
+		$fail('laravel-addressing::validation.country')->translate();
 	}
 }

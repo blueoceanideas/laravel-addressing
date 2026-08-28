@@ -2,11 +2,16 @@
 
 namespace Galahad\LaravelAddressing\Support\Validation\Rules;
 
+use Closure;
 use Galahad\LaravelAddressing\Entity\Country;
-use Illuminate\Contracts\Validation\Rule;
+use Galahad\LaravelAddressing\Support\Validation\Rules\Concerns\RunsNestedRules;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\ValidatorAwareRule;
 
-class LooseAdministrativeAreaRule implements Rule
+class LooseAdministrativeAreaRule implements ValidationRule, ValidatorAwareRule
 {
+	use RunsNestedRules;
+
 	/**
 	 * @var \Galahad\LaravelAddressing\Entity\Country
 	 */
@@ -25,19 +30,17 @@ class LooseAdministrativeAreaRule implements Rule
 	/**
 	 * {@inheritdoc}
 	 */
-	public function passes($attribute, $value): bool
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		return (new AdministrativeAreaCodeRule($this->country))->passes($attribute, $value)
-			?: (new AdministrativeAreaNameRule($this->country))->passes($attribute, $value);
-	}
+		$passes = $this->nestedRulePasses(new AdministrativeAreaCodeRule($this->country), $attribute, $value)
+			|| $this->nestedRulePasses(new AdministrativeAreaNameRule($this->country), $attribute, $value);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function message(): string
-	{
-		$type = $this->country->addressFormat()->getAdministrativeAreaType();
+		if ($passes) {
+			return;
+		}
 
-		return trans('laravel-addressing::validation.administrative_area', compact('type'));
+		$fail('laravel-addressing::validation.administrative_area')->translate([
+			'type' => $this->country->addressFormat()->getAdministrativeAreaType(),
+		]);
 	}
 }
